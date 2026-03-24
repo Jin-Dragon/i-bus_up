@@ -1,0 +1,26 @@
+{
+  "name": "bus-job-automation",
+  "version": "0.1.0",
+  "description": "Automates drafting and publishing bus driver job posts to 1-bus.com from Saramin and JobKorea links.",
+  "type": "commonjs",
+  "main": "src/cli.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "login": "node src/cli.js login",
+    "draft": "node src/cli.js draft",
+    "publish": "node src/cli.js publish",
+    "batch": "node src/cli.js batch",
+    "web": "node src/server.js",
+    "check": "node --check src/cli.js && node --check src/jobService.js && node --check src/server.js && node --check src/publishers/oneBus.js && node --check src/parsers/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "iconv-lite": "^0.6.3",
+    "playwright": "^1.53.0"
+  }
+}

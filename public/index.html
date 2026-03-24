@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1-BUS 구인 자동화</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">1-BUS JOB WORKFLOW</p>
+        <h1>공고를 분석하고, 검토한 뒤 등록합니다.</h1>
+        <p class="lead">
+          사람인과 잡코리아 링크를 먼저 분석 결과로 정리하고, 그 결과를 수정한 뒤 1-BUS
+          게시판에 올리는 순서로 작업합니다.
+        </p>
+        <div class="hero-actions">
+          <button id="loginButton" class="button secondary">1-BUS 로그인 세션 저장</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="step-label">STEP 1</p>
+            <h2>공고 분석</h2>
+          </div>
+        </div>
+        <div class="input-row">
+          <label class="field grow">
+            <span>공고 URL</span>
+            <input id="singleUrl" type="url" placeholder="사람인 또는 잡코리아 공고 링크" />
+          </label>
+          <div class="actions">
+            <button id="analyzeButton" class="button accent">분석</button>
+            <button id="resetButton" class="button secondary">화면 초기화</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="step-label">WORKNET</p>
+            <h2>워크넷 버스 일자리 검색</h2>
+          </div>
+          <div class="actions">
+            <button id="worknetSearchButton" class="button accent">워크넷 검색</button>
+            <button id="worknetPublishButton" class="button secondary">1-BUS 등록</button>
+          </div>
+        </div>
+        <div class="input-row">
+          <label class="field grow">
+            <span>추가 검색어</span>
+            <input
+              id="worknetKeyword"
+              type="text"
+              placeholder="기본은 버스기사 관련 키워드로 검색합니다"
+            />
+          </label>
+          <label class="field worknet-region">
+            <span>지역 코드</span>
+            <input id="worknetRegion" type="text" placeholder="선택 입력" />
+          </label>
+        </div>
+        <div id="worknetResultBox" class="worknet-results empty-state">워크넷 검색 대기 중입니다.</div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="step-label">STEP 2</p>
+            <h2>분석 결과</h2>
+          </div>
+          <div class="actions">
+            <button id="previewButton" class="button">미리보기 생성</button>
+          </div>
+        </div>
+        <p class="section-copy">
+          분석된 항목을 확인하고 필요한 내용을 수정한 뒤 미리보기를 다시 생성하세요.
+        </p>
+        <div id="analysisForm" class="analysis-grid empty-state">분석 대기 중입니다.</div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="step-label">STEP 3</p>
+            <h2>미리보기</h2>
+          </div>
+          <div class="actions">
+            <button id="prefillButton" class="button">1-BUS 입력만</button>
+            <button id="submitButton" class="button accent">게시물 등록</button>
+          </div>
+        </div>
+        <div class="preview-meta">
+          <div>
+            <span class="meta-label">제목</span>
+            <strong id="previewTitle">분석 후 생성됩니다</strong>
+          </div>
+          <div>
+            <span class="meta-label">원문 링크</span>
+            <a id="sourceLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+          </div>
+        </div>
+        <iframe id="previewFrame" class="preview-frame" title="게시글 미리보기"></iframe>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <p class="step-label">STATUS</p>
+            <h2>작업 로그</h2>
+          </div>
+        </div>
+        <div id="resultBox" class="result-box">준비됨</div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

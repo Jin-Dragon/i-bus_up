@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: bus-job-automation
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HEADLESS
+        value: true
+      - key: ONEBUS_LOGIN_URL
+        sync: false
+      - key: ONEBUS_JOB_LIST_URL
+        sync: false
+      - key: ONEBUS_DEFAULT_CATEGORY
+        sync: false
+      - key: ONEBUS_USERNAME
+        sync: false
+      - key: ONEBUS_PASSWORD
+        sync: false
+      - key: WORKNET_API_KEY
+        sync: false
