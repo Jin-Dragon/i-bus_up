@@ -36,7 +36,6 @@ const fieldSchema = [
 ];
 
 let currentPosting = null;
-let currentDraft = null;
 let currentWorknetResult = null;
 let currentWorknetPage = 1;
 let selectedWorknetKeys = new Set();
@@ -73,8 +72,8 @@ function escapeHtml(value) {
 
 function renderAnalysisForm(posting) {
   if (!posting) {
-    analysisForm.className = "analysis-grid empty-state";
-    analysisForm.textContent = "분석 대기 중입니다.";
+    analysisForm.className = "analysis-grid empty-box";
+    analysisForm.textContent = "분석 결과가 여기에 표시됩니다.";
     return;
   }
 
@@ -83,7 +82,7 @@ function renderAnalysisForm(posting) {
     .map((field) => {
       const rawValue = posting[field.key];
       const value = Array.isArray(rawValue) ? rawValue.join("\n") : rawValue || "";
-      const input =
+      const control =
         field.multiline || field.list
           ? `<textarea data-field="${field.key}" rows="${field.key === "rawText" ? 6 : 3}">${escapeHtml(value)}</textarea>`
           : `<input data-field="${field.key}" type="${field.type || "text"}" value="${escapeHtml(value)}" />`;
@@ -91,7 +90,7 @@ function renderAnalysisForm(posting) {
       return `
         <label class="editor-field ${field.multiline || field.list ? "wide" : ""}">
           <span>${field.label}</span>
-          ${input}
+          ${control}
         </label>
       `;
     })
@@ -121,7 +120,6 @@ function collectPostingFromForm() {
 
 function renderPreview(snapshot) {
   currentPosting = snapshot.posting;
-  currentDraft = snapshot.draft;
 
   previewTitle.textContent = snapshot.draft.title || "제목 없음";
   previewFrame.srcdoc = snapshot.draft.body || "<p>미리보기가 없습니다.</p>";
@@ -133,40 +131,32 @@ function renderPreview(snapshot) {
 
 function renderWorknetResults(result, page = 1) {
   currentWorknetResult = result;
-  currentWorknetPage = page;
 
   if (!result || !result.items || result.items.length === 0) {
-    worknetResultBox.className = "worknet-results empty-state";
+    worknetResultBox.className = "empty-box";
     worknetResultBox.textContent = "조건에 맞는 워크넷 버스 일자리가 없습니다.";
     return;
   }
 
   const totalPages = Math.max(1, Math.ceil(result.items.length / WORKNET_PAGE_SIZE));
-  const safePage = Math.min(Math.max(page, 1), totalPages);
-  currentWorknetPage = safePage;
+  currentWorknetPage = Math.min(Math.max(page, 1), totalPages);
 
-  const startIndex = (safePage - 1) * WORKNET_PAGE_SIZE;
+  const startIndex = (currentWorknetPage - 1) * WORKNET_PAGE_SIZE;
   const items = result.items.slice(startIndex, startIndex + WORKNET_PAGE_SIZE);
 
   worknetResultBox.className = "worknet-results";
   worknetResultBox.innerHTML = `
     <div class="worknet-summary">
-      <div>
-        <strong>검색어:</strong> ${escapeHtml(result.keywordQuery || "-")}
-      </div>
-      <div>
-        <span>필터 결과 ${result.total}건</span>
-        <span> / 수집 ${result.fetchedItems || result.total}건</span>
-        <span> / ${result.fetchedPages || 1}페이지 조회</span>
-      </div>
+      <div><strong>검색어:</strong> ${escapeHtml(result.keywordQuery || "-")}</div>
+      <div>필터 결과 ${result.total}건 / 수집 ${result.fetchedItems || result.total}건 / ${result.fetchedPages || 1}페이지 조회</div>
     </div>
     <div class="worknet-list">
       ${items.map((item) => renderWorknetItem(item)).join("")}
     </div>
     <div class="worknet-pagination">
-      <button id="worknetPrevButton" class="button secondary" ${safePage <= 1 ? "disabled" : ""}>이전 10개</button>
-      <span>${safePage} / ${totalPages}</span>
-      <button id="worknetNextButton" class="button secondary" ${safePage >= totalPages ? "disabled" : ""}>다음 10개</button>
+      <button id="worknetPrevButton" class="button secondary" ${currentWorknetPage <= 1 ? "disabled" : ""}>이전 10개</button>
+      <span>${currentWorknetPage} / ${totalPages}</span>
+      <button id="worknetNextButton" class="button secondary" ${currentWorknetPage >= totalPages ? "disabled" : ""}>다음 10개</button>
     </div>
   `;
 }
@@ -188,7 +178,7 @@ function renderWorknetItem(item) {
         <div class="worknet-item-main">
           <div class="worknet-item-head">
             <strong>${escapeHtml(item.title || "제목 없음")}</strong>
-            <div class="actions">
+            <div class="inline-actions">
               <button class="button secondary worknet-preview-button" data-worknet-key="${escapeHtml(key)}" type="button">미리보기</button>
               <a href="${escapeHtml(item.detailUrl || item.mobileUrl || "#")}" target="_blank" rel="noopener noreferrer">원문 보기</a>
             </div>
@@ -251,17 +241,12 @@ function updateWorknetItemStatus(result) {
     }
 
     selectedWorknetKeys.delete(item.uploadKey);
-
-    return {
-      ...item,
-      ...status
-    };
+    return { ...item, ...status };
   });
 }
 
 function resetScreen() {
   currentPosting = null;
-  currentDraft = null;
   currentWorknetResult = null;
   currentWorknetPage = 1;
   selectedWorknetKeys = new Set();
@@ -269,14 +254,15 @@ function resetScreen() {
   document.getElementById("singleUrl").value = "";
   document.getElementById("worknetKeyword").value = "";
   document.getElementById("worknetRegion").value = "";
+
   renderAnalysisForm(null);
   previewTitle.textContent = "분석 후 생성됩니다";
   previewFrame.srcdoc =
     "<p style='font-family: Malgun Gothic, sans-serif; padding: 24px;'>미리보기가 없습니다.</p>";
   sourceLink.textContent = "-";
   sourceLink.href = "#";
-  worknetResultBox.className = "worknet-results empty-state";
-  worknetResultBox.textContent = "워크넷 검색 대기 중입니다.";
+  worknetResultBox.className = "empty-box";
+  worknetResultBox.textContent = "워크넷 검색 결과를 불러오면 여기에 표시됩니다.";
   setResult("준비됨");
 }
 
@@ -287,8 +273,7 @@ async function analyzePosting() {
   }
 
   const payload = await callApi("/api/draft", { url });
-  currentPosting = payload.snapshot.posting;
-  renderAnalysisForm(currentPosting);
+  renderAnalysisForm(payload.snapshot.posting);
   renderPreview(payload.snapshot);
   setResult(payload.message);
 }
@@ -302,8 +287,8 @@ async function refreshPreview() {
     posting: collectPostingFromForm()
   });
 
-  renderPreview(payload.snapshot);
   renderAnalysisForm(payload.snapshot.posting);
+  renderPreview(payload.snapshot);
   setResult(payload.message);
 }
 
@@ -317,13 +302,14 @@ async function publishPosting(submit) {
     submit
   });
 
-  renderPreview(payload.snapshot);
   renderAnalysisForm(payload.snapshot.posting);
-  setResult(
-    payload.snapshot.publishResult?.finalUrl
-      ? `${payload.message}\n${payload.snapshot.publishResult.finalUrl}`
-      : payload.message
-  );
+  renderPreview(payload.snapshot);
+
+  const message = payload.snapshot.publishResult?.finalUrl
+    ? `${payload.message}\n${payload.snapshot.publishResult.finalUrl}`
+    : payload.message;
+
+  setResult(message);
 
   if (submit) {
     alert("등록되었습니다.");
@@ -348,8 +334,8 @@ async function previewWorknetItem(key) {
   }
 
   const payload = await callApi("/api/worknet/render", { item });
-  renderPreview(payload.snapshot);
   renderAnalysisForm(payload.snapshot.posting);
+  renderPreview(payload.snapshot);
   setResult(payload.message);
 }
 
@@ -366,6 +352,7 @@ async function publishSelectedWorknetItems() {
   const payload = await callApi("/api/worknet/publish", { items });
   updateWorknetItemStatus(payload.result);
   renderWorknetResults(currentWorknetResult, currentWorknetPage);
+
   const summaryMessage = `${payload.message}\n성공 ${payload.result.successCount}건 / 중복 건너뜀 ${payload.result.skippedCount}건 / 실패 ${payload.result.failureCount}건`;
   setResult(summaryMessage);
   alert(summaryMessage);
@@ -388,9 +375,7 @@ document.getElementById("analyzeButton").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("resetButton").addEventListener("click", () => {
-  resetScreen();
-});
+document.getElementById("resetButton").addEventListener("click", resetScreen);
 
 document.getElementById("worknetSearchButton").addEventListener("click", async () => {
   try {
@@ -408,13 +393,39 @@ document.getElementById("worknetPublishButton").addEventListener("click", async 
   }
 });
 
+document.getElementById("previewButton").addEventListener("click", async () => {
+  try {
+    await refreshPreview();
+  } catch (error) {
+    setResult(error.message);
+  }
+});
+
+document.getElementById("prefillButton").addEventListener("click", async () => {
+  try {
+    await publishPosting(false);
+  } catch (error) {
+    setResult(error.message);
+  }
+});
+
+document.getElementById("submitButton").addEventListener("click", async () => {
+  try {
+    await publishPosting(true);
+  } catch (error) {
+    setResult(error.message);
+  }
+});
+
 worknetResultBox.addEventListener("click", (event) => {
   if (event.target.id === "worknetPrevButton" && currentWorknetResult) {
     renderWorknetResults(currentWorknetResult, currentWorknetPage - 1);
+    return;
   }
 
   if (event.target.id === "worknetNextButton" && currentWorknetResult) {
     renderWorknetResults(currentWorknetResult, currentWorknetPage + 1);
+    return;
   }
 
   if (event.target.classList.contains("worknet-preview-button")) {
@@ -441,30 +452,6 @@ worknetResultBox.addEventListener("change", (event) => {
   }
 
   renderWorknetResults(currentWorknetResult, currentWorknetPage);
-});
-
-document.getElementById("previewButton").addEventListener("click", async () => {
-  try {
-    await refreshPreview();
-  } catch (error) {
-    setResult(error.message);
-  }
-});
-
-document.getElementById("prefillButton").addEventListener("click", async () => {
-  try {
-    await publishPosting(false);
-  } catch (error) {
-    setResult(error.message);
-  }
-});
-
-document.getElementById("submitButton").addEventListener("click", async () => {
-  try {
-    await publishPosting(true);
-  } catch (error) {
-    setResult(error.message);
-  }
 });
 
 resetScreen();

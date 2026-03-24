@@ -89,7 +89,7 @@ async function buildPostingFromWorknetItem(item) {
   const parsed = await parseWorknetPosting(detailUrl, item);
   const posting = finalizePosting(parsed);
 
-  if (posting.title && !/\(워크넷\)\s*$/.test(posting.title)) {
+  if (posting.title && !/\(워크넷\)\s*$/u.test(posting.title)) {
     posting.title = `${posting.title} (워크넷)`;
   }
 

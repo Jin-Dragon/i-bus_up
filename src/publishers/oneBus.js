@@ -62,6 +62,12 @@ async function publishToOneBus(draft, options = {}) {
   const context = await createContext(browser);
   const page = await context.newPage();
   const category = options.category || config.defaultCategory;
+  let lastDialogMessage = "";
+
+  page.on("dialog", async (dialog) => {
+    lastDialogMessage = dialog.message();
+    await dialog.accept().catch(() => {});
+  });
 
   await page.goto(buildBoardUrl(category), { waitUntil: "domcontentloaded" });
   await openWritePage(page);
@@ -86,6 +92,7 @@ async function publishToOneBus(draft, options = {}) {
       'a[onclick*="submit"]'
     ]);
     await page.waitForLoadState("networkidle").catch(() => {});
+    await page.waitForTimeout(1500);
   } else if (config.headless) {
     await page.screenshot({ path: `${config.dataDir}\\onebus-filled-form.png`, fullPage: true });
   } else {
@@ -93,6 +100,16 @@ async function publishToOneBus(draft, options = {}) {
   }
 
   const finalUrl = page.url();
+  if (options.submit && !isViewPageUrl(finalUrl)) {
+    await page.screenshot({ path: `${config.dataDir}\\onebus-submit-failed.png`, fullPage: true }).catch(() => {});
+    await browser.close();
+    throw new Error(
+      lastDialogMessage
+        ? `1-BUS submit did not complete: ${lastDialogMessage}`
+        : `1-BUS submit did not complete. Final URL remained ${finalUrl}`
+    );
+  }
+
   await browser.close();
   return { finalUrl };
 }
@@ -103,6 +120,10 @@ function buildBoardUrl(category) {
 
 function needsLogin(url) {
   return /login|signin|member/i.test(url);
+}
+
+function isViewPageUrl(url) {
+  return /[?&]bmode=view/i.test(String(url || ""));
 }
 
 async function openWritePage(page) {
