@@ -5,6 +5,7 @@ const { parseJobPosting, finalizePosting } = require("./parsers");
 const { parseWorknetPosting } = require("./parsers/worknet");
 const { buildOneBusDraft } = require("./templates/oneBusTemplate");
 const { loginOneBus, publishToOneBus } = require("./publishers/oneBus");
+const { hasRemoteWorker, loginViaWorker, publishDraftViaWorker } = require("./workerClient");
 const {
   annotateWorknetItems,
   getWorknetItemKey,
@@ -25,12 +26,25 @@ function createSnapshotFromPosting(inputPosting) {
   return snapshot;
 }
 
+async function publishDraft(draft, options = {}) {
+  if (hasRemoteWorker()) {
+    return publishDraftViaWorker(draft, options);
+  }
+
+  return publishToOneBus(draft, options);
+}
+
 async function createDraftSnapshot(url) {
   const rawPosting = await parseJobPosting(url);
   return createSnapshotFromPosting(rawPosting);
 }
 
 async function runLogin() {
+  if (hasRemoteWorker()) {
+    await loginViaWorker();
+    return;
+  }
+
   await loginOneBus();
 }
 
@@ -40,13 +54,13 @@ async function renderDraftFromPosting(posting) {
 
 async function publishFromPosting(posting, options = {}) {
   const snapshot = createSnapshotFromPosting(posting);
-  const publishResult = await publishToOneBus(snapshot.draft, options);
+  const publishResult = await publishDraft(snapshot.draft, options);
   return { ...snapshot, publishResult };
 }
 
 async function publishFromUrl(url, options = {}) {
   const snapshot = await createDraftSnapshot(url);
-  const publishResult = await publishToOneBus(snapshot.draft, options);
+  const publishResult = await publishDraft(snapshot.draft, options);
   return { ...snapshot, publishResult };
 }
 
@@ -121,7 +135,7 @@ async function publishSelectedWorknetItems(items, options = {}) {
     try {
       const posting = await buildPostingFromWorknetItem(item);
       const snapshot = createSnapshotFromPosting(posting);
-      const publishResult = await publishToOneBus(snapshot.draft, options);
+      const publishResult = await publishDraft(snapshot.draft, options);
       const historyItem = markWorknetUploaded(item, publishResult, snapshot.draft.title);
 
       results.push({

@@ -82,6 +82,32 @@ Health check path:
 /api/health
 ```
 
+## Worker mode
+
+For reliable 1-BUS uploads in production, run a separate worker server outside Render and let the Render app forward login/publish requests to it.
+
+Recommended split:
+
+- Render:
+  - `APP_ROLE=web`
+  - `WORKER_BASE_URL=https://your-worker-host`
+  - `WORKER_SHARED_TOKEN=your-shared-secret`
+  - No need to store the 1-BUS credentials on Render
+- Worker server or VPS:
+  - `APP_ROLE=worker`
+  - `WORKER_SHARED_TOKEN=your-shared-secret`
+  - `ONEBUS_USERNAME=...`
+  - `ONEBUS_PASSWORD=...`
+  - `HEADLESS=true`
+
+Worker endpoints:
+
+- `POST /internal/worker/login`
+- `POST /internal/worker/publish`
+- `GET /internal/worker/health`
+
+These worker endpoints require the `x-worker-token` header and are intended for server-to-server use only.
+
 ## Batch mode
 
 Run multiple URLs in one go:
